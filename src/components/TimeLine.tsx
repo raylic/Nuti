@@ -6,12 +6,11 @@ import type { CardProps } from './Card';
 import { useRecordStore } from '../store';
 import type { Record, Food, Combo } from '../interface';
 import { themeConfig } from '../utils';
+import AddRecordDialog from './AddRecordDialog';
 
-const TimelineItem = ({ position, ...props }: CardProps) => {
-  const isLeft = position === 'left';
-
+const TimelineItem = ({ position, onContextMenu, ...props }: CardProps & { onContextMenu?: (e: React.MouseEvent) => void }) => {
   return (
-    <div className="relative flex items-center justify-between max-w-[500px] mx-auto">
+    <div className="relative flex items-center justify-between max-w-[500px] mx-auto" onContextMenu={onContextMenu}>
       <Card
         {...props}
         position={position}
@@ -31,10 +30,14 @@ function DetailDialog({
   record,
   open,
   onOpenChange,
+  onEdit,
+  onDelete,
 }: {
   record: Record | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   if (!record) return null;
 
@@ -42,6 +45,11 @@ function DetailDialog({
   const foods: Food[] = 'foods' in content ? (content as Combo).foods : [content as Food];
   const nutrients = content.nutrients;
   const notice = 'notice' in content ? (content as Combo).notice : '';
+  const [confirmingDelete, setConfirmingDelete] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!open) setConfirmingDelete(false);
+  }, [open]);
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -56,7 +64,17 @@ function DetailDialog({
               {/* 标题行 */}
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold text-[var(--accent-a11)]">{content.name}</h2>
-                <span className="ml-auto text-sm text-[var(--gray-8)]">{record.eatTime}</span>
+                <button onClick={onEdit} className="ml-auto text-sm text-[var(--accent-a9)] hover:text-[var(--accent-a11)]">编辑</button>
+                {confirmingDelete ? (
+                  <div className="flex gap-1 items-center">
+                    <span className="text-xs text-red-500">确认删除？</span>
+                    <button onClick={() => { onDelete(); setConfirmingDelete(false); }} className="text-sm bg-red-500 text-white rounded px-2 py-0.5 hover:bg-red-600 transition-colors">是</button>
+                    <button onClick={() => setConfirmingDelete(false)} className="text-sm bg-[var(--accent-a3)] text-[var(--accent-a11)] rounded px-2 py-0.5">否</button>
+                  </div>
+                ) : (
+                  <button onClick={() => setConfirmingDelete(true)} className="text-sm bg-red-500 text-white rounded px-2 py-1 hover:bg-red-600 transition-colors">删除</button>
+                )}
+                <span className="text-sm text-[var(--gray-8)]">{record.eatTime}</span>
               </div>
 
               {notice && (
@@ -70,7 +88,7 @@ function DetailDialog({
                     key={food.id}
                     title={food.name}
                     subTitle={`${food.nutrients.carb.toFixed(0)}g|${food.nutrients.protein.toFixed(0)}g|${food.nutrients.fat.toFixed(0)}g${food.weight ? `  ${food.weight}g` : ''}`}
-                    content={`${food.nutrients.calories}卡`}
+                    content={`${Math.round(food.nutrients.calories)}卡`}
                   />
                 ))}
               </div>
@@ -87,41 +105,185 @@ function DetailDialog({
   );
 }
 
+function ContextMenu({
+  position,
+  onClose,
+  onEdit,
+  onDelete,
+}: {
+  record: Record;
+  position: 'left' | 'right';
+  onClose: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const menuRef = React.useRef<HTMLDivElement>(null);
+  const [confirmingDelete, setConfirmingDelete] = React.useState(false);
+
+  React.useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        onClose();
+        setConfirmingDelete(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onClose]);
+
+  return (
+    <div
+      ref={menuRef}
+      className={`absolute top-1/2 -translate-y-1/2 z-20 bg-white rounded-lg shadow-lg border border-[var(--accent-a5)] overflow-hidden transition-all duration-200 scale-100 opacity-100 ${
+        position === 'left' ? 'left-[calc(50%+1rem)]' : 'right-[calc(50%+1rem)]'
+      }`}
+    >
+      <button
+        onClick={onEdit}
+        className="w-full px-3 py-1.5 text-center text-sm text-[var(--accent-a11)] hover:bg-[var(--accent-a3)] transition-colors"
+      >
+        编辑
+      </button>
+      {confirmingDelete ? (
+        <div className="flex flex-col gap-1 px-2 py-1">
+          <span className="text-xs text-red-500 text-center">确认删除？</span>
+          <div className="flex gap-1 justify-center">
+            <button
+              onClick={() => { onDelete(); setConfirmingDelete(false); }}
+              className="px-2 py-0.5 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+            >
+              是
+            </button>
+            <button
+              onClick={() => setConfirmingDelete(false)}
+              className="px-2 py-0.5 text-xs bg-[var(--accent-a3)] text-[var(--accent-a11)] rounded"
+            >
+              否
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setConfirmingDelete(true)}
+          className="w-full px-3 py-1.5 text-center text-sm bg-red-500 text-white hover:bg-red-600 transition-colors"
+        >
+          删除
+        </button>
+      )}
+    </div>
+  );
+}
+
 const Timeline = () => {
   const records = useRecordStore((state) => state.records);
+  const setActiveDate = useRecordStore((state) => state.setActiveDate);
+  const removeRecord = useRecordStore((state) => state.removeRecord);
   const [selectedRecord, setSelectedRecord] = React.useState<Record | null>(null);
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [menuRecord, setMenuRecord] = React.useState<{ record: Record; position: 'left' | 'right' } | null>(null);
+  const [editRecord, setEditRecord] = React.useState<Record | null>(null);
+  const [editOpen, setEditOpen] = React.useState(false);
+
+  // 滚动时检测当前可见日期，联动顶部数据
+  React.useEffect(() => {
+    const sentinels = document.querySelectorAll('[data-date]');
+    if (sentinels.length === 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) {
+          setActiveDate((visible[0].target as HTMLElement).dataset.date!);
+        }
+      },
+      { rootMargin: '-10% 0px -70% 0px' }
+    );
+    sentinels.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [records, setActiveDate]);
 
   const handleRecordClick = (record: Record) => {
     setSelectedRecord(record);
     setDialogOpen(true);
   };
 
+  const handleContextMenu = (e: React.MouseEvent, record: Record, position: 'left' | 'right') => {
+    e.preventDefault();
+    setMenuRecord({ record, position });
+  };
+
   return (
     <div className="relative h-full">
-      {records.slice().reverse().map((record, index) => {
+      {records.length === 0 ? (
+        <div className="flex items-center justify-center h-full text-sm text-[var(--gray-8)]">
+          暂无记录，点击下方 + 按钮添加
+        </div>
+      ) : (
+        records.map((record, index) => {
         const food = record.content;
         const nutrients = food.nutrients;
         const subTitle = `${nutrients.carb.toFixed(0)}g|${nutrients.protein.toFixed(0)}g|${nutrients.fat.toFixed(0)}g`;
-        const content = `${nutrients.calories}`;
+        const content = `${Math.round(nutrients.calories)}`;
+        const position = index % 2 === 0 ? 'left' as const : 'right' as const;
+
+        // 日期分割：新日期首次出现时展示日期+时间，后续只展示时间
+        const prevRecord = index > 0 ? records[index - 1] : null;
+        const showDate = !prevRecord || record.eatDate !== prevRecord.eatDate;
+        const dateLabel = showDate ? `${record.eatDate.slice(5)} ${record.eatTime}` : record.eatTime;
 
         return (
-          <TimelineItem
-            key={record.id}
-            position={index % 2 === 0 ? 'left' : 'right'}
-            title={food.name}
-            subTitle={subTitle}
-            content={content}
-            date={record.eatTime}
-            onClick={() => handleRecordClick(record)}
-          />
-        );
-      })}
+          <div key={record.id} className="relative" data-date={showDate ? record.eatDate : undefined}>
+            <TimelineItem
+              position={position}
+              title={food.name}
+              subTitle={subTitle}
+              content={content}
+              date={dateLabel}
+              onClick={() => handleRecordClick(record)}
+              onContextMenu={(e) => handleContextMenu(e, record, position)}
+            />
 
+            {/* 长按菜单 */}
+            {menuRecord && menuRecord.record.id === record.id && (
+              <ContextMenu
+                record={menuRecord.record}
+                position={menuRecord.position}
+                onClose={() => setMenuRecord(null)}
+                onEdit={() => {
+                  setEditRecord(menuRecord.record);
+                  setEditOpen(true);
+                  setMenuRecord(null);
+                }}
+                onDelete={() => {
+                  removeRecord(menuRecord.record.id);
+                  setMenuRecord(null);
+                }}
+              />
+            )}
+          </div>
+        );
+      }))}
+      <div className='h-20' />
       <DetailDialog
         record={selectedRecord}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
+        onEdit={() => {
+          setEditRecord(selectedRecord);
+          setEditOpen(true);
+          setDialogOpen(false);
+        }}
+        onDelete={() => {
+          if (selectedRecord) removeRecord(selectedRecord.id);
+          setDialogOpen(false);
+        }}
+      />
+
+      <AddRecordDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        editRecord={editRecord || undefined}
       />
     </div>
   );

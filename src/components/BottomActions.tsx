@@ -30,7 +30,7 @@ export default function BottomActions({
           </div> */}
 
           <div
-            className="pointer-events-auto absolute left-1/2 -translate-x-1/2 bottom-0 rounded-full text-white font-semibold shadow-lg bg-[var(--accent-track)] h-16 w-16 flex items-center justify-center"
+            className="pointer-events-auto absolute left-1/2 -translate-x-1/2 bottom-0 rounded-full text-white font-semibold shadow-lg bg-[var(--accent-track)] h-16 w-16 flex items-center justify-center border-3 border-[var(--accent-surface)]"
             onClick={() => setIsAddRecordDialogOpen(true)}
           >
               <PlusIcon color={'var(--accent-surface)'} className='w-6 h-6' />

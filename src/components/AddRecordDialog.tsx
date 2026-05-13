@@ -6,16 +6,16 @@ import * as Form from '@radix-ui/react-form'
 import { Card } from './Card';
 import { FoodSelect, FoodTag } from './FoodList';
 import FoodDialog from './EditFoodDialog';
-import type { Food } from '../interface';
-import { foods } from '../mock'
+import type { Food, Combo, Record } from '../interface';
 import { calculateCalories, themeConfig } from '../utils';
-import { useRecordStore } from '../store';
+import { useRecordStore, useFoodStore } from '../store';
 
 const inputClass = 'rounded-md outline-none text-[var(--accent-a11)] bg-[var(--accent-a3)] ml-1'
 
 type NameDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
+  editRecord?: Record
 }
 
 function RecordForm({formData, setFormData, onClose}) {
@@ -107,17 +107,28 @@ type FormData = {
     weight: number
     count: number
 }
-const useAddRecordPage = () => {
-    const [allFoods, setAllFoods] = React.useState<Food[]>(foods);
+const useAddRecordPage = (editRecord?: Record) => {
+    const allFoods = useFoodStore((state) => state.foods);
+    const addFoodToStore = useFoodStore((state) => state.addFood);
+    const updateFoodInStore = useFoodStore((state) => state.updateFood);
+    const removeFoodInStore = useFoodStore((state) => state.removeFood);
     // 记录表单
-    const [formData, setFormData] = React.useState<FormData>({
-        name: '午餐',
-        notice: '',
-        weight: 100,
-        count: 1,
-    })
+    const [formData, setFormData] = React.useState<FormData>(() => {
+        if (editRecord) {
+            const c = editRecord.content;
+            const notice = 'notice' in c ? (c as Combo).notice : '';
+            return { name: c.name, notice, weight: 100, count: 1 };
+        }
+        return { name: '午餐', notice: '', weight: 100, count: 1 };
+    });
     // 当前已选择的食物列表
-    const [selectedFoods, setSelectedFoods] = React.useState<Food[]>([])
+    const [selectedFoods, setSelectedFoods] = React.useState<Food[]>(() => {
+        if (editRecord) {
+            const c = editRecord.content;
+            return 'foods' in c ? [...(c as Combo).foods] : [{ ...(c as Food) }];
+        }
+        return [];
+    });
 
     // 选择区内选中的食物
     const [selectedId, setId] = React.useState('');
@@ -149,7 +160,7 @@ const useAddRecordPage = () => {
                 carb: Math.round(food.nutrients.carb * scale * 100) / 100,
                 protein: Math.round(food.nutrients.protein * scale * 100) / 100,
                 fat: Math.round(food.nutrients.fat * scale * 100) / 100,
-                calories: Math.round(food.nutrients.calories * scale * 100) / 100,
+                calories: Math.round(food.nutrients.calories * scale),
             },
         };
 
@@ -169,16 +180,21 @@ const useAddRecordPage = () => {
         selectedId,
         setId,
         selectedFoods,
+        setSelectedFoods,
         handleAddFoodToSelection,
         handleRemoveFoodFromSelection,
         clearSelectedFoods,
         allFoods,
+        addFoodToStore,
+        updateFoodInStore,
+        removeFoodInStore,
     }
 }
 
 export default function AddRecordDialog({
   open,
   onOpenChange,
+  editRecord,
 }: NameDialogProps) {
     const {
         formData,
@@ -186,21 +202,35 @@ export default function AddRecordDialog({
         selectedId,
         setId,
         selectedFoods,
+        setSelectedFoods,
         handleAddFoodToSelection,
         clearSelectedFoods,
         allFoods,
-    } = useAddRecordPage()
+        addFoodToStore,
+        updateFoodInStore,
+        removeFoodInStore,
+    } = useAddRecordPage(editRecord)
 
     const addRecord = useRecordStore((state) => state.addRecord);
+    const updateRecord = useRecordStore((state) => state.updateRecord);
 
-    // 关闭弹窗时清空已选食物
+    // 弹窗打开时，根据模式填充数据
     React.useEffect(() => {
-        if (!open) {
-            clearSelectedFoods();
+        if (open) {
+            if (editRecord) {
+                const c = editRecord.content;
+                const notice = 'notice' in c ? (c as Combo).notice : '';
+                setFormData({ name: c.name, notice, weight: 100, count: 1 });
+                const foods = 'foods' in c ? [...(c as Combo).foods] : [{ ...(c as Food) }];
+                setSelectedFoods(foods);
+            } else {
+                setFormData({ name: '午餐', notice: '', weight: 100, count: 1 });
+                setSelectedFoods([]);
+            }
         }
-    }, [open, clearSelectedFoods]);
+    }, [open, editRecord]); // open 每次变化都触发，确保同一条记录再次编辑也能填入
 
-    const handleRecord = React.useCallback(() => {
+    const handleSave = React.useCallback(() => {
         if (selectedFoods.length === 0) return;
 
         const aggregateNutrients = selectedFoods.reduce(
@@ -213,8 +243,8 @@ export default function AddRecordDialog({
             { carb: 0, protein: 0, fat: 0, calories: 0 }
         );
 
-        const combo = {
-            id: `combo-${Date.now()}`,
+        const combo: Combo = {
+            id: editRecord ? (editRecord.content as Combo).id : `combo-${Date.now()}`,
             name: formData.name,
             icon: selectedFoods[0]?.icon || '',
             foods: selectedFoods,
@@ -222,18 +252,21 @@ export default function AddRecordDialog({
             notice: formData.notice,
         };
 
-        const now = new Date();
-        const record = {
-            id: String(Date.now()),
-            content: combo,
-            eatTime: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
-            eatDate: now.toISOString().split('T')[0],
-        };
+        if (editRecord) {
+            updateRecord(editRecord.id, { content: combo });
+        } else {
+            const now = new Date();
+            const record: Record = {
+                id: String(Date.now()),
+                content: combo,
+                eatTime: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
+                eatDate: now.toISOString().split('T')[0],
+            };
+            addRecord(record);
+        }
 
-        addRecord(record);
-        // setSelectedFoods([]);
         onOpenChange(false);
-    }, [selectedFoods, formData, addRecord, onOpenChange]);
+    }, [selectedFoods, formData, editRecord, addRecord, updateRecord, onOpenChange]);
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -256,7 +289,7 @@ export default function AddRecordDialog({
                                 className='w-auto'
                                 title={food.name}
                                 subTitle={`${food.weight || 100}g ${food.nutrients.carb.toFixed(0)}|${food.nutrients.protein.toFixed(0)}|${food.nutrients.fat.toFixed(0)}`}
-                                content={`${food.nutrients.calories}卡`}
+                                content={`${Math.round(food.nutrients.calories)}卡`}
                             />
                         ))
                     )}
@@ -275,10 +308,10 @@ export default function AddRecordDialog({
                     <Button
                         type="submit"
                         variant="solid"
-                        onClick={handleRecord}
+                        onClick={handleSave}
                         style={{ flex: 3, height: '3rem' }}
                     >
-                        记一顿
+                        {editRecord ? '保存修改' : '记一餐'}
                     </Button>
                 </div>
                 <AddForm
@@ -290,6 +323,9 @@ export default function AddRecordDialog({
                     selectedId={selectedId}
                     setId={setId}
                     foods={allFoods}
+                    addFood={addFoodToStore}
+                    updateFood={updateFoodInStore}
+                    removeFood={removeFoodInStore}
                 />
             </div> 
         </Dialog.Content>

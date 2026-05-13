@@ -8,7 +8,7 @@ const Combo = ({ combo }: { combo: Combo }) => {
       <Card
         title={combo.name}
         subTitle={`${nutrients.carb.toFixed(0)}g|${nutrients.protein.toFixed(0)}g|${nutrients.fat.toFixed(0)}g`}
-        content={combo.nutrients.calories}
+        content={Math.round(combo.nutrients.calories)}
         // mark={combo.notice}
       />
     </div>

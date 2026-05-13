@@ -11,7 +11,7 @@ export const themeConfig = {
  * @param carbs 碳水化合物克数（g）
  * @param fats 脂肪克数（g）
  * @param proteins 蛋白质克数（g）
- * @returns 总卡路里（千卡），保留2位小数
+ * @returns 总卡路里（千卡），整数
  * @throws 当输入为负数或非数字时抛出错误
  */
 export function calculateCalories(
@@ -45,6 +45,6 @@ export function calculateCalories(
   const proteinsCalories = proteins * PROTEINS_CAL_PER_GRAM;
   const totalCalories = carbsCalories + fatsCalories + proteinsCalories;
 
-  // 保留2位小数，避免浮点运算精度问题
-  return Math.round(totalCalories * 100) / 100;
+  // 四舍五入取整
+  return Math.round(totalCalories);
 }
