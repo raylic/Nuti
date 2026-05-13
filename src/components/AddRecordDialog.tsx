@@ -8,7 +8,7 @@ import { FoodSelect, FoodTag } from './FoodList';
 import FoodDialog from './EditFoodDialog';
 import type { Food } from '../interface';
 import { foods } from '../mock'
-import { calculateCalories } from '../utils';
+import { calculateCalories, themeConfig } from '../utils';
 
 const inputClass = 'rounded-md outline-none text-[var(--accent-a11)] bg-[var(--accent-a3)] ml-1'
 
@@ -203,7 +203,7 @@ export default function AddRecordDialog({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/40" />
-        <Theme accentColor="orange">
+        <Theme accentColor={themeConfig.accentColor}>
         <Dialog.Content
           aria-label=""
           className="fixed top-1/2 left-1/2 w-full h-full max-w-md -translate-x-1/2 -translate-y-1/2 shadow-lg bg-white"

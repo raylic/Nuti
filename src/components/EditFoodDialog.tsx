@@ -3,6 +3,7 @@ import { Theme, Flex, Box, Button, Text, Callout } from "@radix-ui/themes";
 import { InfoCircledIcon } from "@radix-ui/react-icons"
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Form from '@radix-ui/react-form'
+import { themeConfig } from '../utils';
 
 const inputClass = 'rounded-md outline-none text-[var(--accent-a11)] bg-[var(--accent-a3)] ml-1'
 
@@ -36,7 +37,7 @@ export default function FoodDialog({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/40" />
-        <Theme accentColor="tomato">
+        <Theme accentColor={themeConfig.accentColor}>
         <Dialog.Content
           aria-label=""
           className="fixed top-1/2 left-1/2 w-[80%] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg shadow-lg bg-white"

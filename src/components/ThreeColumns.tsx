@@ -3,12 +3,34 @@ import React from 'react';
 import carb from '../assets/carb.svg';
 import fat from '../assets/fat.svg';
 import meat from '../assets/meat.svg';
+import { useRecordStore } from '../store';
 
 export default function ThreeColumns() {
+  const records = useRecordStore((state) => state.records);
+
+  // 计算今日营养素总量
+  const todayNutrients = React.useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const todayRecords = records.filter((r) => r.eatDate === today);
+
+    return todayRecords.reduce(
+      (acc, record) => {
+        const nutrients = record.content.nutrients;
+        return {
+          carb: acc.carb + nutrients.carb,
+          protein: acc.protein + nutrients.protein,
+          fat: acc.fat + nutrients.fat,
+          calories: acc.calories + nutrients.calories,
+        };
+      },
+      { carb: 0, protein: 0, fat: 0, calories: 0 }
+    );
+  }, [records]);
+
   const items = [
-    { img: carb, title: '160g', desc: '碳水' },
-    { img: meat, title: '50g', desc: '蛋白质' },
-    { img: fat, title: '50g', desc: '脂肪' },
+    { img: carb, title: `${Math.round(todayNutrients.carb)}g`, desc: '碳水' },
+    { img: meat, title: `${Math.round(todayNutrients.protein)}g`, desc: '蛋白质' },
+    { img: fat, title: `${Math.round(todayNutrients.fat)}g`, desc: '脂肪' },
   ];
 
   return (

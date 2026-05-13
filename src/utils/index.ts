@@ -1,3 +1,8 @@
+// 主题配置
+export const themeConfig = {
+  accentColor: 'tomato' as const,
+};
+
 // 通过碳水 蛋白质 脂肪 计算总热量
 
 /**

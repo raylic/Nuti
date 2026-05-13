@@ -1,15 +1,24 @@
-import React from 'react';
-import { Card } from './Combo'; 
+import { Card } from './Combo';
 import type { CardProps } from './Combo';
+import { useRecordStore } from '../store';
 
-const TimelineItem = (props: CardProps & { date?: string; type: string }) => {
+const TimelineItem = ({ position, ...props }: CardProps) => {
+  const isLeft = position === 'left';
+
   return (
     <div className="relative flex items-center justify-between max-w-[500px] mx-auto">
-      {/* 时间 */}
+      {/* 食物卡片 */}
       <Card
         {...props}
+        position={position}
         className='w-[calc(50%-1.5rem)]'
       />
+
+      {/* 时间 - 在对侧 */}
+      {/* <div className={`absolute ${isLeft ? 'left-[calc(50%+1.5rem)]' : 'left-0'} w-[calc(50%-1.5rem)] text-${isLeft ? 'left' : 'right'} text-sm text-[var(--gray-8)] px-2`}>
+        {props.date}
+      </div> */}
+
       {/* 中间时间线 */}
       <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-[var(--accent-7)] opacity-80">
         <div className="flex align-center justify-center absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-4 border-solid border-[var(--accent-7)] bg-white">
@@ -20,32 +29,29 @@ const TimelineItem = (props: CardProps & { date?: string; type: string }) => {
 };
 
 const Timeline = () => {
-  const timelineData = [
-    { title: '日常早餐', subTitle: '50g|30g|20g', content: '150', mark: '一根香蕉一杯蛋白粉一瓶饮料', date: '2026-02-25' },
-    { title: '日常早餐', subTitle: '50g|30g|20g', content: '150', mark: '一根香蕉一杯蛋白粉一瓶饮料' },
-    { title: '日常早餐', subTitle: '50g|30g|20g', content: '150', mark: '一根香蕉一杯蛋白粉一瓶饮料' },
-    { title: '日常早餐', subTitle: '50g|30g|20g', content: '150', mark: '一根香蕉一杯蛋白粉一瓶饮料' },
-    { title: '午餐', subTitle: '50g|30g|20g', content: '123', date: '2026-02-25' },
-    { title: '锻炼', subTitle: '50g|30g|20g', content: '', date: '2026-02-25' },
-    { title: '加餐', subTitle: '50g|30g|20g', content: '' },
-    { title: '午餐', subTitle: '50g|30g|20g', content: '' },
-    { title: '晚餐', subTitle: '50g|30g|20g', content: '' },
-  ];
+  const records = useRecordStore((state) => state.records);
 
   return (
-    <div>
-      {timelineData.map((item, index) => (
-        <TimelineItem
-          key={index}
-          position={index % 2 === 0 ? 'left' : 'right'} // 根据索引交替显示左右
-          // icon={item.icon}
-          date={item.date}
-          title={item.title}
-          subTitle={item.subTitle}
-          content={item.content}
-          mark={item.mark}
-        />
-      ))}
+    <div className="relative h-full">
+      {records.map((record, index) => {
+        const food = record.content;
+        const nutrients = food.nutrients;
+        const subTitle = `${nutrients.carb}g|${nutrients.protein}g|${nutrients.fat}g`;
+        const content = `${nutrients.calories}`;
+
+        return (
+          <TimelineItem
+            key={record.id}
+            position={index % 2 === 0 ? 'left' : 'right'}
+            title={food.name}
+            subTitle={subTitle}
+            content={content}
+            date={record.eatTime}
+          />
+        );
+      })}
+      {/* 空白区域的竖线 */}
+      <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-1/2 bottom-0 bg-[var(--accent-7)] opacity-80"></div>
     </div>
   );
 };

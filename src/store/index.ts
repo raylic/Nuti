@@ -1,6 +1,61 @@
 import { create } from 'zustand';
 import type { Food, Record } from "../interface.d";
 
+// 获取今日日期字符串
+const getTodayDate = () => new Date().toISOString().split('T')[0];
+
+// Mock 初始记录数据
+const initialRecords: Record[] = [
+  {
+    id: '1',
+    content: {
+      id: 'food_banana_001',
+      name: '香蕉',
+      icon: '',
+      nutrients: { carb: 50, protein: 3, fat: 1, calories: 150 },
+      defaultWeight: 100,
+    },
+    eatTime: '08:00',
+    eatDate: getTodayDate(),
+  },
+  {
+    id: '2',
+    content: {
+      id: 'food_protein_001',
+      name: '蛋白粉',
+      icon: '',
+      nutrients: { carb: 5, protein: 30, fat: 2, calories: 150 },
+      defaultWeight: 30,
+    },
+    eatTime: '08:00',
+    eatDate: getTodayDate(),
+  },
+  {
+    id: '3',
+    content: {
+      id: 'food_lunch_001',
+      name: '午餐',
+      icon: '',
+      nutrients: { carb: 80, protein: 40, fat: 20, calories: 680 },
+      defaultWeight: 500,
+    },
+    eatTime: '12:30',
+    eatDate: getTodayDate(),
+  },
+  {
+    id: '4',
+    content: {
+      id: 'food_dinner_001',
+      name: '晚餐',
+      icon: '',
+      nutrients: { carb: 60, protein: 35, fat: 15, calories: 520 },
+      defaultWeight: 400,
+    },
+    eatTime: '18:30',
+    eatDate: getTodayDate(),
+  },
+];
+
 interface FoodState {
   foods: Food[];
   addFood: (food: Food) => void;
@@ -51,7 +106,7 @@ interface RecordState {
 }
 
 const useRecordStore = create<RecordState>((set, get) => ({
-  records: [],
+  records: initialRecords,
   
   addRecord: (record) => set((state) => ({
     records: [...state.records, record]
