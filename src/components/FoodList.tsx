@@ -36,23 +36,6 @@ export const FoodSelect = ({ selectedId, setId, foods, addFood }) => {
                 </IconButton>
                 {foods.map(item => <FoodTag onClick={() => setId(item.id)} title={item.name} selected={selectedId === item.id} /> )}
             </div>
-            <div className="flex flex-row gap-2 mt-2">
-                <Button
-                    type="button"
-                    variant="soft"
-                    highContrast
-                    style={{ marginLeft: 'auto', width: '50%' }}
-                >
-                    移除食物
-                </Button>
-                <Button
-                    type="button"
-                    variant="solid"
-                    style={{ marginLeft: 'auto', width: '50%' }}
-                >
-                    编辑食物
-                </Button>
-            </div>
             <FoodDialog
                 open={visible}
                 onOpenChange={setVisible}

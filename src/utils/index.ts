@@ -1,6 +1,7 @@
 // 主题配置
+// const accentColors = ['gray', 'gold', 'bronze', 'brown', 'yellow', 'amber', 'orange', 'tomato', 'red', 'ruby', 'crimson', 'pink', 'plum', 'purple', 'violet', 'iris', 'indigo', 'blue', 'cyan', 'teal', 'jade', 'green', 'grass', 'lime', 'mint', 'sky'] as const;
 export const themeConfig = {
-  accentColor: 'tomato' as const,
+  accentColor: 'ruby' as const,
 };
 
 // 通过碳水 蛋白质 脂肪 计算总热量

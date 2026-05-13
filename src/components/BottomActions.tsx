@@ -23,11 +23,11 @@ export default function BottomActions({
       <AddRecordDialog open={isAddRecordDialogOpen} onOpenChange={setIsAddRecordDialogOpen} />
       <div className="fixed left-0 right-0 bottom-4 pointer-events-none">
         <div className="relative w-full max-w-4xl mx-auto px-4">
-          <div
+          {/* <div
             onClick={onMainClick}
             className="pointer-events-auto absolute left-1/2 -translate-x-1/2 px-6 py-3 rounded-full text-white font-semibold shadow-lg bg-[var(--gray-2)] h-12 w-40 bottom-2 flex items-center justify-center"
           >
-          </div>
+          </div> */}
 
           <div
             className="pointer-events-auto absolute left-1/2 -translate-x-1/2 bottom-0 rounded-full text-white font-semibold shadow-lg bg-[var(--accent-track)] h-16 w-16 flex items-center justify-center"

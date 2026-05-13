@@ -21,7 +21,7 @@ type NameDialogProps = {
   // trigger?: React.ReactNode
   formData: FormData,
   setFormData: React.Dispatch<React.SetStateAction<FormData>>;
-  handleSubmit: () => void;
+  handleSubmit?: () => void;
 }
 
 export default function FoodDialog({
