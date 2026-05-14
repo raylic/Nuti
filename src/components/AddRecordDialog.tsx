@@ -16,6 +16,7 @@ type NameDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   editRecord?: Record
+  copyRecord?: Record
 }
 
 function RecordForm({formData, setFormData, onClose}) {
@@ -60,13 +61,15 @@ function RecordForm({formData, setFormData, onClose}) {
 
 function AddForm({ onConfirm, formData, setFormData }) {
     return  (        
-        <Form.Root className="flex gap-1 justify-start">
-            <Form.Field name="weight" >
+        <Form.Root className="flex gap-1 justify">
+            <Form.Field name="weight" className='flex-1' >
                 <Form.Label>
                     <Text size="2" weight="medium">每份克重</Text>
                 </Form.Label>
                 <Form.Control asChild>
                     <input
+                        type="number"
+                        inputMode="decimal"
                         defaultValue={100}
                         className={`${inputClass} px-2 p-1 w-12`}
                         value={formData.weight}
@@ -75,24 +78,42 @@ function AddForm({ onConfirm, formData, setFormData }) {
                 </Form.Control>
             </Form.Field>
             
-            <Form.Field name="count" >
-                <Form.Label>
-                    <Text size="2" weight="medium">x 份数</Text>
-                </Form.Label>
-                <Form.Control asChild>
-                    <input
-                    defaultValue={1}
-                    className={`${inputClass} px-2 p-1 w-8`}
-                    value={formData.count}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, count: e.target.value }))}
-                    />
-                </Form.Control>
+            <Form.Field name="count" className='flex-1 flex items-center' >
+                <Text size="2" weight="medium">x 份数</Text>
+                <div className="flex items-center gap-0.5 flex-nowrap">
+                  <Form.Control asChild>
+                      <input
+                      type="number"
+                      inputMode="decimal"
+                      defaultValue={1}
+                      className={`${inputClass} px-1 p-1 w-6`}
+                      value={formData.count}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, count: e.target.value }))}
+                      />
+                  </Form.Control>
+                  <div className="flex flex-col">
+                    <button
+                      type="button"
+                      className="text-xs leading-none px-1 py-0.5 text-[var(--accent-a11)] hover:bg-[var(--accent-a3)] rounded-t"
+                      onClick={() => setFormData((prev) => ({ ...prev, count: Math.max(1, Number(prev.count) + 1) }))}
+                    >
+                      ▲
+                    </button>
+                    <button
+                      type="button"
+                      className="text-xs leading-none px-1 py-0.5 text-[var(--accent-a11)] hover:bg-[var(--accent-a3)] rounded-b"
+                      onClick={() => setFormData((prev) => ({ ...prev, count: Math.max(1, Number(prev.count) - 1) }))}
+                    >
+                      ▼
+                    </button>
+                  </div>
+                </div>
             </Form.Field>
-
             <Button
                 variant="solid"
                 type="button"
                 onClick={onConfirm}
+                className='flex-0'
                 style={{ marginLeft: 'auto' }}
             >
                 确认分量
@@ -133,12 +154,12 @@ const useAddRecordPage = (editRecord?: Record) => {
     // 选择区内选中的食物
     const [selectedId, setId] = React.useState('');
 
-    // 选中食物时，每份克重跟随食物的 defaultWeight
+    // 选中食物时，每份克重跟随食物的 defaultWeight，份数重置为1
     React.useEffect(() => {
         if (!selectedId) return;
         const food = allFoods.find((f) => f.id === selectedId);
         if (food) {
-            setFormData((prev) => ({ ...prev, weight: food.defaultWeight }));
+            setFormData((prev) => ({ ...prev, weight: food.defaultWeight, count: 1 }));
         }
     }, [selectedId, allFoods]);
 
@@ -195,7 +216,9 @@ export default function AddRecordDialog({
   open,
   onOpenChange,
   editRecord,
+  copyRecord,
 }: NameDialogProps) {
+    const record = editRecord || copyRecord;
     const {
         formData,
         setFormData,
@@ -204,12 +227,13 @@ export default function AddRecordDialog({
         selectedFoods,
         setSelectedFoods,
         handleAddFoodToSelection,
+        handleRemoveFoodFromSelection,
         clearSelectedFoods,
         allFoods,
         addFoodToStore,
         updateFoodInStore,
         removeFoodInStore,
-    } = useAddRecordPage(editRecord)
+    } = useAddRecordPage(record)
 
     const addRecord = useRecordStore((state) => state.addRecord);
     const updateRecord = useRecordStore((state) => state.updateRecord);
@@ -217,8 +241,9 @@ export default function AddRecordDialog({
     // 弹窗打开时，根据模式填充数据
     React.useEffect(() => {
         if (open) {
-            if (editRecord) {
-                const c = editRecord.content;
+            const record = editRecord || copyRecord;
+            if (record) {
+                const c = record.content;
                 const notice = 'notice' in c ? (c as Combo).notice : '';
                 setFormData({ name: c.name, notice, weight: 100, count: 1 });
                 const foods = 'foods' in c ? [...(c as Combo).foods] : [{ ...(c as Food) }];
@@ -228,7 +253,7 @@ export default function AddRecordDialog({
                 setSelectedFoods([]);
             }
         }
-    }, [open, editRecord]); // open 每次变化都触发，确保同一条记录再次编辑也能填入
+    }, [open, editRecord, copyRecord]);
 
     const handleSave = React.useCallback(() => {
         if (selectedFoods.length === 0) return;
@@ -243,8 +268,9 @@ export default function AddRecordDialog({
             { carb: 0, protein: 0, fat: 0, calories: 0 }
         );
 
+        const isEdit = !!(editRecord && !copyRecord);
         const combo: Combo = {
-            id: editRecord ? (editRecord.content as Combo).id : `combo-${Date.now()}`,
+            id: isEdit ? (editRecord.content as Combo).id : `combo-${Date.now()}`,
             name: formData.name,
             icon: selectedFoods[0]?.icon || '',
             foods: selectedFoods,
@@ -252,7 +278,7 @@ export default function AddRecordDialog({
             notice: formData.notice,
         };
 
-        if (editRecord) {
+        if (isEdit) {
             updateRecord(editRecord.id, { content: combo });
         } else {
             const now = new Date();
@@ -266,7 +292,7 @@ export default function AddRecordDialog({
         }
 
         onOpenChange(false);
-    }, [selectedFoods, formData, editRecord, addRecord, updateRecord, onOpenChange]);
+    }, [selectedFoods, formData, editRecord, copyRecord, addRecord, updateRecord, onOpenChange]);
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -290,6 +316,7 @@ export default function AddRecordDialog({
                                 title={food.name}
                                 subTitle={`${food.weight || 100}g ${food.nutrients.carb.toFixed(0)}|${food.nutrients.protein.toFixed(0)}|${food.nutrients.fat.toFixed(0)}`}
                                 content={`${Math.round(food.nutrients.calories)}卡`}
+                                onClick={() => handleRemoveFoodFromSelection(food.id)}
                             />
                         ))
                     )}
@@ -311,7 +338,7 @@ export default function AddRecordDialog({
                         onClick={handleSave}
                         style={{ flex: 3, height: '3rem' }}
                     >
-                        {editRecord ? '保存修改' : '记一餐'}
+                        {copyRecord ? '复制记录' : editRecord ? '保存修改' : '记一餐'}
                     </Button>
                 </div>
                 <AddForm

@@ -120,7 +120,7 @@ const useRecordStore = create<RecordState>((set, get) => ({
   setActiveDate: (date) => set({ activeDate: date }),
 
   addRecord: (record) => set((state) => ({
-    records: [...state.records, record]
+    records: [record, ...state.records]
   })),
 
   removeRecord: (id) => set((state) => ({

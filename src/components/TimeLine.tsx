@@ -30,6 +30,7 @@ function DetailDialog({
   record,
   open,
   onOpenChange,
+  onCopy,
   onEdit,
   onDelete,
 }: {
@@ -38,6 +39,7 @@ function DetailDialog({
   onOpenChange: (open: boolean) => void;
   onEdit: () => void;
   onDelete: () => void;
+  onCopy: () => void;
 }) {
   if (!record) return null;
 
@@ -64,17 +66,16 @@ function DetailDialog({
               {/* 标题行 */}
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold text-[var(--accent-a11)]">{content.name}</h2>
-                <button onClick={onEdit} className="ml-auto text-sm text-[var(--accent-a9)] hover:text-[var(--accent-a11)]">编辑</button>
+                <div onClick={onCopy} className="ml-auto text-sm text-[var(--accent-a9)] hover:text-[var(--accent-a11)]">复制</div>
+                <div onClick={onEdit} className="text-sm text-[var(--accent-a9)] hover:text-[var(--accent-a11)]">编辑</div>
                 {confirmingDelete ? (
                   <div className="flex gap-1 items-center">
-                    <span className="text-xs text-red-500">确认删除？</span>
-                    <button onClick={() => { onDelete(); setConfirmingDelete(false); }} className="text-sm bg-red-500 text-white rounded px-2 py-0.5 hover:bg-red-600 transition-colors">是</button>
-                    <button onClick={() => setConfirmingDelete(false)} className="text-sm bg-[var(--accent-a3)] text-[var(--accent-a11)] rounded px-2 py-0.5">否</button>
+                    <div onClick={() => { onDelete(); setConfirmingDelete(false); }} className="text-sm bg-red-500 text-white rounded px-2 py-0.5 hover:bg-red-600 transition-colors">是</div>
+                    <div onClick={() => setConfirmingDelete(false)} className="text-sm bg-[var(--accent-a3)] text-[var(--accent-a11)] rounded px-2 py-0.5">否</div>
                   </div>
                 ) : (
-                  <button onClick={() => setConfirmingDelete(true)} className="text-sm bg-red-500 text-white rounded px-2 py-1 hover:bg-red-600 transition-colors">删除</button>
+                  <div onClick={() => setConfirmingDelete(true)} className="text-sm bg-red-500 text-white rounded px-2 py-1 hover:bg-red-600 transition-colors">删除</div>
                 )}
-                <span className="text-sm text-[var(--gray-8)]">{record.eatTime}</span>
               </div>
 
               {notice && (
@@ -86,16 +87,19 @@ function DetailDialog({
                 {foods.map((food) => (
                   <Card
                     key={food.id}
-                    title={food.name}
-                    subTitle={`${food.nutrients.carb.toFixed(0)}g|${food.nutrients.protein.toFixed(0)}g|${food.nutrients.fat.toFixed(0)}g${food.weight ? `  ${food.weight}g` : ''}`}
+                    title={`${food.name}${food.weight ? `  ${food.weight}g` : ''}`}
+                    subTitle={`${food.nutrients.carb.toFixed(0)}g|${food.nutrients.protein.toFixed(0)}g|${food.nutrients.fat.toFixed(0)}g`}
                     content={`${Math.round(food.nutrients.calories)}卡`}
                   />
                 ))}
               </div>
 
               {/* 合计 */}
-              <div className="text-sm text-[var(--accent-a11)] text-right border-t border-[var(--accent-a5)] pt-2">
-                合计 {nutrients.carb.toFixed(0)}g|{nutrients.protein.toFixed(0)}g|{nutrients.fat.toFixed(0)}g {nutrients.calories.toFixed(0)}卡
+              <div className="flex justify-between items-center text-sm border-t border-[var(--accent-a5)] pt-2">
+                <span className="text-[var(--gray-8)]">{record.eatTime}</span>
+                <span className="text-[var(--accent-a11)]">
+                  合计 {nutrients.carb.toFixed(0)}g|{nutrients.protein.toFixed(0)}g|{nutrients.fat.toFixed(0)}g {nutrients.calories.toFixed(0)}卡
+                </span>
               </div>
             </div>
           </Dialog.Content>
@@ -108,6 +112,7 @@ function DetailDialog({
 function ContextMenu({
   position,
   onClose,
+  onCopy,
   onEdit,
   onDelete,
 }: {
@@ -116,6 +121,7 @@ function ContextMenu({
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onCopy: () => void;
 }) {
   const menuRef = React.useRef<HTMLDivElement>(null);
   const [confirmingDelete, setConfirmingDelete] = React.useState(false);
@@ -134,41 +140,46 @@ function ContextMenu({
   return (
     <div
       ref={menuRef}
-      className={`absolute top-1/2 -translate-y-1/2 z-20 bg-white rounded-lg shadow-lg border border-[var(--accent-a5)] overflow-hidden transition-all duration-200 scale-100 opacity-100 ${
+      className={`absolute top-1/2 -translate-y-1/2 z-20 bg-white rounded-lg shadow-lg border border-[var(--accent-a5)] overflow-hidden transition-all duration-200 scale-100 opacity-100 flex flex-row ${
         position === 'left' ? 'left-[calc(50%+1rem)]' : 'right-[calc(50%+1rem)]'
       }`}
     >
-      <button
+      <div
+        onClick={onCopy}
+        className="px-2 py-1 text-center text-sm text-[var(--accent-a11)] hover:bg-[var(--accent-a3)] transition-colors whitespace-nowrap"
+      >
+        复制
+      </div>
+      <div
         onClick={onEdit}
-        className="w-full px-3 py-1.5 text-center text-sm text-[var(--accent-a11)] hover:bg-[var(--accent-a3)] transition-colors"
+        className="px-2 py-1 text-center text-sm text-[var(--accent-a11)] hover:bg-[var(--accent-a3)] transition-colors whitespace-nowrap"
       >
         编辑
-      </button>
+      </div>
       {confirmingDelete ? (
-        <div className="flex flex-col gap-1 px-2 py-1">
-          <span className="text-xs text-red-500 text-center">确认删除？</span>
-          <div className="flex gap-1 justify-center">
-            <button
+        <div className="flex items-center gap-1 px-2 py-1 whitespace-nowrap">
+          <div className="flex gap-1">
+            <div
               onClick={() => { onDelete(); setConfirmingDelete(false); }}
-              className="px-2 py-0.5 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+              className="px-1.5 py-0.5 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
             >
               是
-            </button>
-            <button
+            </div>
+            <div
               onClick={() => setConfirmingDelete(false)}
-              className="px-2 py-0.5 text-xs bg-[var(--accent-a3)] text-[var(--accent-a11)] rounded"
+              className="px-1.5 py-0.5 text-xs bg-[var(--accent-a3)] text-[var(--accent-a11)] rounded"
             >
               否
-            </button>
+            </div>
           </div>
         </div>
       ) : (
-        <button
+        <div
           onClick={() => setConfirmingDelete(true)}
-          className="w-full px-3 py-1.5 text-center text-sm bg-red-500 text-white hover:bg-red-600 transition-colors"
+          className="px-2 py-1 text-center text-sm bg-red-500 text-white hover:bg-red-600 transition-colors whitespace-nowrap"
         >
           删除
-        </button>
+        </div>
       )}
     </div>
   );
@@ -183,6 +194,7 @@ const Timeline = () => {
   const [menuRecord, setMenuRecord] = React.useState<{ record: Record; position: 'left' | 'right' } | null>(null);
   const [editRecord, setEditRecord] = React.useState<Record | null>(null);
   const [editOpen, setEditOpen] = React.useState(false);
+  const [copyRecord, setCopyRecord] = React.useState<Record | null>(null);
 
   // 滚动时检测当前可见日期，联动顶部数据
   React.useEffect(() => {
@@ -250,6 +262,11 @@ const Timeline = () => {
                 record={menuRecord.record}
                 position={menuRecord.position}
                 onClose={() => setMenuRecord(null)}
+                onCopy={() => {
+                  setCopyRecord(menuRecord.record);
+                  setEditOpen(true);
+                  setMenuRecord(null);
+                }}
                 onEdit={() => {
                   setEditRecord(menuRecord.record);
                   setEditOpen(true);
@@ -269,6 +286,11 @@ const Timeline = () => {
         record={selectedRecord}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
+        onCopy={() => {
+          setCopyRecord(selectedRecord);
+          setEditOpen(true);
+          setDialogOpen(false);
+        }}
         onEdit={() => {
           setEditRecord(selectedRecord);
           setEditOpen(true);
@@ -282,8 +304,12 @@ const Timeline = () => {
 
       <AddRecordDialog
         open={editOpen}
-        onOpenChange={setEditOpen}
+        onOpenChange={(open) => {
+          setEditOpen(open);
+          if (!open) { setCopyRecord(null); setEditRecord(null); }
+        }}
         editRecord={editRecord || undefined}
+        copyRecord={copyRecord || undefined}
       />
     </div>
   );

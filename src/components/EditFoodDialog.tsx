@@ -180,7 +180,6 @@ export default function FoodDialog({
             <div className="mt-3 pt-3 border-t border-[var(--accent-a5)]">
               {confirmingDelete ? (
                 <div className="flex gap-2 items-center justify-between">
-                  <Text size="2" color="red">确认删除？</Text>
                   <div className="flex gap-2">
                     <button
                       type="button"
