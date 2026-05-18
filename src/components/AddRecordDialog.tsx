@@ -7,7 +7,7 @@ import { Card } from './Card';
 import { FoodSelect, FoodTag } from './FoodList';
 import FoodDialog from './EditFoodDialog';
 import type { Food, Combo, Record } from '../interface';
-import { calculateCalories, themeConfig } from '../utils';
+import { calculateCalories, themeConfig, getDefaultMealName } from '../utils';
 import { useRecordStore, useFoodStore } from '../store';
 
 const inputClass = 'rounded-md outline-none text-[var(--accent-a11)] bg-[var(--accent-a3)] ml-1'
@@ -140,7 +140,7 @@ const useAddRecordPage = (editRecord?: Record) => {
             const notice = 'notice' in c ? (c as Combo).notice : '';
             return { name: c.name, notice, weight: 100, count: 1 };
         }
-        return { name: '午餐', notice: '', weight: 100, count: 1 };
+        return { name: getDefaultMealName(), notice: '', weight: 100, count: 1 };
     });
     // 当前已选择的食物列表
     const [selectedFoods, setSelectedFoods] = React.useState<Food[]>(() => {
@@ -185,6 +185,12 @@ const useAddRecordPage = (editRecord?: Record) => {
             },
         };
 
+        // 第一个食物时名称用食物名，第二个及以上用默认餐名
+        if (selectedFoods.length === 0) {
+            setFormData((prev) => ({ ...prev, name: food.name }));
+        } else {
+            setFormData((prev) => ({ ...prev, name: getDefaultMealName() }));
+        }
         setSelectedFoods((prev) => [...prev, foodWithScaledNutrients]);
     };
 
@@ -238,6 +244,20 @@ export default function AddRecordDialog({
     const addRecord = useRecordStore((state) => state.addRecord);
     const updateRecord = useRecordStore((state) => state.updateRecord);
 
+    // 移动端滑动返回/浏览器后退时关闭弹窗
+    React.useEffect(() => {
+        if (open) {
+            window.history.pushState({ dialogOpen: true }, '');
+        }
+        const handlePopState = () => {
+            if (open) {
+                onOpenChange(false);
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [open, onOpenChange]);
+
     // 弹窗打开时，根据模式填充数据
     React.useEffect(() => {
         if (open) {
@@ -249,7 +269,7 @@ export default function AddRecordDialog({
                 const foods = 'foods' in c ? [...(c as Combo).foods] : [{ ...(c as Food) }];
                 setSelectedFoods(foods);
             } else {
-                setFormData({ name: '午餐', notice: '', weight: 100, count: 1 });
+                setFormData({ name: getDefaultMealName(), notice: '', weight: 100, count: 1 });
                 setSelectedFoods([]);
             }
         }
@@ -298,7 +318,7 @@ export default function AddRecordDialog({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/40" />
-        <Theme accentColor={themeConfig.accentColor}>
+        <Theme accentColor={themeConfig.accentColor} appearance={themeConfig.appearance}>
         <Dialog.Content
           aria-label=""
           className="fixed top-1/2 left-1/2 w-full h-full max-w-md -translate-x-1/2 -translate-y-1/2 shadow-lg bg-white"

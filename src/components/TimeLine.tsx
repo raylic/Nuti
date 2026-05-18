@@ -57,7 +57,7 @@ function DetailDialog({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/40" />
-        <Theme accentColor={themeConfig.accentColor}>
+        <Theme accentColor={themeConfig.accentColor} appearance={themeConfig.appearance}>
           <Dialog.Content
             aria-label={content.name}
             className="fixed top-1/2 left-1/2 w-[90%] max-w-md max-h-[80vh] -translate-x-1/2 -translate-y-1/2 rounded-lg shadow-lg bg-white overflow-auto"

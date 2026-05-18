@@ -28,7 +28,7 @@ function App() {
   const isToday = activeDate === getToday();
 
   return (
-    <Theme accentColor={themeConfig.accentColor}>
+    <Theme accentColor={themeConfig.accentColor} appearance={themeConfig.appearance}>
       <Flex direction="column" className='bg-[var(--accent-surface)] h-[100vh] p-4 pb-0 gap-4'>
         <Box>
           <Flex direction="row" gap="2">

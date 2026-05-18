@@ -68,10 +68,10 @@ interface FoodState {
 }
 
 const useFoodStore = create<FoodState>((set, get) => ({
-  foods: mockFoods,
+  foods: [...mockFoods].sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN')),
 
   addFood: (food) => set((state) => ({
-    foods: [food, ...state.foods]
+    foods: [food, ...state.foods].sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'))
   })),
 
   removeFood: (id) => set((state) => ({

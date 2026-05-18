@@ -1,7 +1,9 @@
 // 主题配置
 // const accentColors = ['gray', 'gold', 'bronze', 'brown', 'yellow', 'amber', 'orange', 'tomato', 'red', 'ruby', 'crimson', 'pink', 'plum', 'purple', 'violet', 'iris', 'indigo', 'blue', 'cyan', 'teal', 'jade', 'green', 'grass', 'lime', 'mint', 'sky'] as const;
+// orange ruby red blue jade sky
 export const themeConfig = {
-  accentColor: 'ruby' as const,
+  accentColor: 'orange' as const,
+  appearance: 'light',//(typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') as 'light' | 'dark',
 };
 
 // 通过碳水 蛋白质 脂肪 计算总热量
@@ -47,4 +49,14 @@ export function calculateCalories(
 
   // 四舍五入取整
   return Math.round(totalCalories);
+}
+
+// 根据 UTC+8 时间获取默认餐名
+export function getDefaultMealName(): string {
+  const h = (new Date().getUTCHours() + 8) % 24;
+  if (h >= 5 && h < 11) return '早餐';
+  if (h >= 11 && h < 14) return '午餐';
+  if (h >= 14 && h < 17) return '下午茶';
+  if (h >= 17 && h < 21) return '晚餐';
+  return '夜宵';
 }

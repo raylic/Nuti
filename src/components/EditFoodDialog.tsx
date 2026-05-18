@@ -56,7 +56,7 @@ export default function FoodDialog({
   if (!open) return null;
 
   return (
-    <Theme accentColor={themeConfig.accentColor}>
+    <Theme accentColor={themeConfig.accentColor} appearance={themeConfig.appearance}>
       {/* Overlay */}
       <div className="fixed inset-0 bg-black/40 z-40" onClick={() => onOpenChange(false)} />
       {/* Content panel */}
